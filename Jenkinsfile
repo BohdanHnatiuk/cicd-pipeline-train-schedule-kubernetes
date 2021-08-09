@@ -1,20 +1,32 @@
 pipeline {
     agent any
+    tools {
+        maven 'Mvn3'
+        //jdk 'jdk8'
+    } 
     environment {
-        //be sure to replace "willbla" with your own Docker Hub username
-        DOCKER_IMAGE_NAME = "bohdanhnatiuk/train-schedule"
+        DOCKER_IMAGE_NAME = "bohdanhnatiuk/petclinic"
     }
     stages {
-        stage('Build') {
+
+        stage('Compile') {
             steps {
-                echo 'Running build automation'
-                sh './gradlew build --no-daemon'
-                archiveArtifacts artifacts: 'dist/trainSchedule.zip'
+            sh 'mvn compile' //only compilation of the code
+            }
+        } 
+        stage('Test') {
+            steps {
+                sh '''
+                mvn clean install
+                ls
+                pwd
+                ''' 
+            //if the code is compiled, we test and package it in its distributable format; run IT and store in local repository
             }
         }
         stage('Build Docker Image') {
             when {
-                branch 'master'
+                branch 'main'
             }
             steps {
                 script {
@@ -45,13 +57,8 @@ pipeline {
             steps {
                 input 'Deploy to Production?'
                 milestone(1)
-                kubernetesDeploy(
-                    kubeconfigId: 'kubeconfig',
-                    configs: 'train-schedule-kube.yml',
-                    enableConfigSubstitution: true
-                )
             }
         }
-        
+
     }
 }
