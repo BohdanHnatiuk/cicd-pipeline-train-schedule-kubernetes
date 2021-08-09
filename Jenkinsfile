@@ -5,28 +5,19 @@ pipeline {
         //jdk 'jdk8'
     } 
     environment {
-        DOCKER_IMAGE_NAME = "bohdanhnatiuk/petclinic"
+        DOCKER_IMAGE_NAME = "bohdanhnatiuk/train-schedule"
     }
     stages {
-
-        stage('Compile') {
+        stage('Build') {
             steps {
-            sh 'mvn compile' //only compilation of the code
-            }
-        } 
-        stage('Test') {
-            steps {
-                sh '''
-                mvn clean install
-                ls
-                pwd
-                ''' 
-            //if the code is compiled, we test and package it in its distributable format; run IT and store in local repository
+                echo 'Running build automation'
+                sh './gradlew build --no-daemon'
+                archiveArtifacts artifacts: 'dist/trainSchedule.zip'
             }
         }
         stage('Build Docker Image') {
             when {
-                branch 'main'
+                branch 'master'
             }
             steps {
                 script {
